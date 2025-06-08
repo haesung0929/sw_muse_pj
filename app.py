@@ -45,7 +45,7 @@ def generate_lyrics(topic: str, feeling: str, genre: str, min_lines: int = 4) ->
         f"최소 {min_lines}줄 이상."
     )
     response = openai_client.chat.completions.create(
-        model="<여기에-정확한-yue-가사-모델명>",  # 예: "yue-lyrics-v1"
+        model="<YuE-Singer Large>",  # 예: "yue-lyrics-v1"
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
         max_tokens=512
@@ -58,7 +58,7 @@ def generate_lyrics(topic: str, feeling: str, genre: str, min_lines: int = 4) ->
 def generate_melody(lyrics: str, feeling: str, genre: str) -> bytes:
     prompt = f"[{feeling} | {genre}] 다음 가사로 자연스러운 노래(보컬+멜로디) 생성:\n{lyrics}"
     response = openai_client.chat.completions.create(
-        model="<여기에-정확한-yue-오디오-모델명>",  # 예: "yue-music-v1"
+        model="<YuE-Singer Large>",  # 예: "yue-music-v1"
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
         max_tokens=2048
