@@ -1,3 +1,6 @@
+# PyTorch GPU (CUDA 11.7) wheel index
+--extra-index-url https://download.pytorch.org/whl/cu117
+
 accelerate==1.7.0
 annotated-types==0.7.0
 anyio==4.9.0
@@ -64,14 +67,20 @@ six==1.17.0
 sniffio==1.3.1
 soundfile==0.13.1
 sympy==1.14.0
-tokenizers==0.21.1
-torch==2.7.1+cpu
-torchaudio==2.7.1+cpu
-torchvision==0.22.1+cpu
+
+# 토크나이저 & 트랜스포머 호환 버전
+tokenizers==0.13.3
+transformers==4.26.1
+
+# GPU용 PyTorch
+torch==1.13.1+cu117
+torchvision==0.14.1+cu117
+torchaudio==0.13.1+cu117
+
 tqdm==4.67.1
-transformers==4.52.4
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 urllib3==2.4.0
 webcolors==24.11.1
 Werkzeug==3.1.3
+
