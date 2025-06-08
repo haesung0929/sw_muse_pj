@@ -4,7 +4,6 @@ import base64
 
 from flask import Flask, request, send_file, jsonify, render_template
 from dotenv import load_dotenv
-
 from openai import OpenAI
 import music21
 from music21 import instrument as m21instr
@@ -13,6 +12,16 @@ from music21 import instrument as m21instr
 # (1) 환경 변수 로드 & Flask 앱 초기화
 # ───────────────────────────────────────────────────────────────────────────────
 load_dotenv()
+# load_dotenv() 호출 직후
+# 기존 하드코딩 대신 환경변수로부터 MuseScore 경로를 불러옵니다.
+MUSICXML_PATH = os.getenv("MUSESCORE_PATH", "/usr/bin/musescore")
+MUSESCORE_DIRECT_PNG_PATH = os.getenv("MUSESCORE_DIRECT_PNG_PATH", MUSICXML_PATH)
+
+# music21 환경에 설정
+music21.environment.set("musicxmlPath", MUSICXML_PATH)
+music21.environment.set("musescoreDirectPNGPath", MUSESCORE_DIRECT_PNG_PATH)
+
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 if not OPENAI_API_KEY:
     raise RuntimeError("환경 변수에 OPENAI_API_KEY를 설정하세요.")
@@ -23,9 +32,7 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 # ───────────────────────────────────────────────────────────────────────────────
 # (2) Music21 + MuseScore 환경 설정 (악보 PNG 생성용)
 # ───────────────────────────────────────────────────────────────────────────────
-MUSICXML_PATH = "MUSICXML_PATH = os.getenv("MUSESCORE_PATH", "/usr/bin/musescore")"             # 서버에 설치된 MuseScore 경로
-MUSESCORE_DIRECT_PNG_PATH = r"/usr/bin/musescore"  # 동일하게 MuseScore 경로
-
+# music21 환경에 설정
 music21.environment.set("musicxmlPath", MUSICXML_PATH)
 music21.environment.set("musescoreDirectPNGPath", MUSESCORE_DIRECT_PNG_PATH)
 
