@@ -67,7 +67,6 @@
     <!-- 3. 악보 생성 -->
     <div class="section">
         <label>생성된 노래로 악보 출력:</label><br>
-        <input type="text" id="score-instruments" placeholder="악기 입력 ex) 피아노">
         <button id="btn-generate-score">악보 생성</button>
     </div>
 
@@ -84,6 +83,7 @@
     <script>
     let midiPath = "";
     let audioPath = "";
+
     // 가사 생성
     $('#btn-generate-lyrics').click(function() {
         const topic = $('#topic').val();
@@ -124,13 +124,13 @@
 
     // 악보 생성
     $('#btn-generate-score').click(function() {
-        const instruments = $('#score-instruments').val().split(',').map(x => x.trim()).filter(Boolean);
         if (!midiPath) { alert('먼저 노래를 생성하세요!'); return; }
+        const accompaniment = $('#accompaniment').val();
         $.ajax({
             url: '/generate-score',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({midi_path: midiPath, instruments}),
+            data: JSON.stringify({midi_path: midiPath, accompaniment}),
             success: function(res) {
                 $('#generated-score').html(`<b>악보(PDF):</b> <a href="${res.score_path.replace('./results','/download')}" download>다운로드</a>`);
             }
