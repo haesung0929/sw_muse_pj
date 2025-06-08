@@ -1,11 +1,3 @@
---find-links https://download.pytorch.org/whl/cu117/
---no-index
-
-# GPU용 PyTorch (CUDA 11.7)
-torch==2.0.1+cu117
-torchvision==0.15.2+cu117
-torchaudio==2.0.2+cu117
-
 --index-url https://pypi.org/simple
 
 accelerate==1.7.0
