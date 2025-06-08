@@ -23,7 +23,7 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 # ───────────────────────────────────────────────────────────────────────────────
 # (2) Music21 + MuseScore 환경 설정 (악보 PNG 생성용)
 # ───────────────────────────────────────────────────────────────────────────────
-MUSICXML_PATH = r"/usr/bin/musescore"             # 서버에 설치된 MuseScore 경로
+MUSICXML_PATH = "MUSICXML_PATH = os.getenv("MUSESCORE_PATH", "/usr/bin/musescore")"             # 서버에 설치된 MuseScore 경로
 MUSESCORE_DIRECT_PNG_PATH = r"/usr/bin/musescore"  # 동일하게 MuseScore 경로
 
 music21.environment.set("musicxmlPath", MUSICXML_PATH)
