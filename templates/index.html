@@ -1,0 +1,281 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 음악 생성기</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    section {
+      margin-bottom: 40px;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    input[type="text"], textarea, select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .output {
+      margin-top: 12px;
+      white-space: pre-wrap;
+      background: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+    }
+    audio {
+      width: 100%;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 1. 가사 생성 -->
+  <section>
+    <h2>1. 가사 생성</h2>
+    <input type="text" id="topicInput" placeholder="가사 주제 입력 (예: 여름 밤바다)" />
+
+    <label for="feelingSelect">노래 느낌 선택:</label>
+    <select id="feelingSelect">
+      <option value="">-- 느낌을 선택하세요 --</option>
+      <option value="신나는">신나는</option>
+      <option value="잔잔한">잔잔한</option>
+      <option value="감성적인">감성적인</option>
+      <option value="몽환적인">몽환적인</option>
+    </select>
+
+    <label for="genreSelect">노래 장르 선택:</label>
+    <select id="genreSelect">
+      <option value="">-- 장르를 선택하세요 --</option>
+      <option value="EDM">EDM</option>
+      <option value="팝">팝</option>
+      <option value="락">락</option>
+      <option value="발라드">발라드</option>
+    </select>
+
+    <button id="generateLyricsBtn">가사 생성</button>
+    <div id="lyricsOutput" class="output"></div>
+  </section>
+
+  <!-- 2. 멜로디 생성 -->
+  <section>
+    <h2>2. 멜로디 생성</h2>
+
+    <label for="lyricsTextarea">가사(자동 생성된 가사 or 직접 입력):</label>
+    <textarea id="lyricsTextarea" rows="4" placeholder="생성된 가사가 여기에 표시됩니다..."></textarea>
+
+    <!-- 멜로디 생성 시에도 느낌/장르를 재전달 -->
+    <input type="hidden" id="melodyFeeling" />
+    <input type="hidden" id="melodyGenre" />
+
+    <label for="tokenInput">토큰 길이 (기본 512):</label>
+    <input type="text" id="tokenInput" placeholder="예: 512, 1024, 2048" />
+
+    <button id="generateMelodyBtn">멜로디 생성</button>
+    <audio id="melodyAudio" controls></audio>
+  </section>
+
+  <!-- 3. 악보 생성 -->
+  <section>
+    <h2>3. 악보 생성</h2>
+
+    <label for="instrumentSelect">악기 종류 선택:</label>
+    <select id="instrumentSelect">
+      <option value="">-- 악기를 선택하세요 --</option>
+      <option value="Piano">Piano</option>
+      <option value="Guitar">Guitar</option>
+      <option value="Violin">Violin</option>
+      <option value="Flute">Flute</option>
+    </select>
+
+    <button id="generateScoreBtn">악보 생성</button>
+    <div id="scoreOutput" class="output">
+      <img id="scoreImg" alt="생성된 악보" />
+    </div>
+  </section>
+
+  <!-- 4. TTS 생성 -->
+  <section>
+    <h2>4. TTS (가사 낭독)</h2>
+    <textarea id="ttsInput" rows="2" placeholder="TTS로 읽어줄 문장을 입력하세요."></textarea>
+    <button id="generateTtsBtn">TTS 생성</button>
+    <audio id="ttsAudio" controls></audio>
+  </section>
+
+  <script>
+    // ----- 1. 가사 생성 -----
+    document.getElementById("generateLyricsBtn").addEventListener("click", async () => {
+      const topic = document.getElementById("topicInput").value.trim();
+      const feeling = document.getElementById("feelingSelect").value;
+      const genre = document.getElementById("genreSelect").value;
+
+      if (!topic) {
+        alert("가사 주제를 입력하세요.");
+        return;
+      }
+      if (!feeling) {
+        alert("노래 느낌을 선택하세요.");
+        return;
+      }
+      if (!genre) {
+        alert("노래 장르를 선택하세요.");
+        return;
+      }
+
+      document.getElementById("lyricsOutput").textContent = "가사 생성 중… 잠시만 기다려주세요";
+      try {
+        const res = await fetch("/generate-lyrics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, feeling, genre })
+        });
+        const data = await res.json();
+        if (data.lyrics) {
+          // 생성된 가사를 화면과 textarea에 넣음
+          document.getElementById("lyricsOutput").textContent = data.lyrics;
+          document.getElementById("lyricsTextarea").value = data.lyrics;
+
+          // 멜로디 생성할 때도 동일한 feeling/genre 재전달
+          document.getElementById("melodyFeeling").value = feeling;
+          document.getElementById("melodyGenre").value = genre;
+        } else {
+          document.getElementById("lyricsOutput").textContent = "가사 생성에 실패했습니다.";
+        }
+      } catch (err) {
+        document.getElementById("lyricsOutput").textContent = "에러 발생: " + err;
+      }
+    });
+
+    // ----- 2. 멜로디 생성 -----
+    document.getElementById("generateMelodyBtn").addEventListener("click", async () => {
+      const lyrics = document.getElementById("lyricsTextarea").value.trim();
+      const feeling = document.getElementById("melodyFeeling").value;
+      const genre = document.getElementById("melodyGenre").value;
+      const tokenInput = document.getElementById("tokenInput").value.trim();
+      const maxTokens = tokenInput ? parseInt(tokenInput) : 512;
+
+      if (!lyrics) {
+        alert("가사가 없습니다. 가사를 먼저 생성하거나 직접 입력하세요.");
+        return;
+      }
+      if (!feeling || !genre) {
+        alert("느낌/장르 정보가 없습니다. 가사를 먼저 생성해 주세요.");
+        return;
+      }
+
+      const btn = document.getElementById("generateMelodyBtn");
+      btn.disabled = true;
+      btn.textContent = "멜로디 생성 중… 잠시만 기다려주세요";
+      document.getElementById("melodyAudio").src = "";
+
+      try {
+        const res = await fetch("/generate-melody", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lyrics, feeling, genre, max_new_tokens: maxTokens })
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json();
+          alert("멜로디 생성 오류: " + (errJson.error || res.statusText));
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audioEl = document.getElementById("melodyAudio");
+        audioEl.src = url;
+        audioEl.play();
+      } catch (err) {
+        alert("에러 발생: " + err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "멜로디 생성";
+      }
+    });
+
+    // ----- 3. 악보 생성 -----
+    document.getElementById("generateScoreBtn").addEventListener("click", async () => {
+      const instrument = document.getElementById("instrumentSelect").value;
+      if (!instrument) {
+        alert("악기를 선택하세요.");
+        return;
+      }
+
+      document.getElementById("scoreImg").src = "";
+      try {
+        const res = await fetch("/generate-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instrument })
+        });
+        const data = await res.json();
+        if (data.score_png) {
+          document.getElementById("scoreImg").src = "data:image/png;base64," + data.score_png;
+        } else {
+          document.getElementById("scoreImg").alt = "악보 생성에 실패했습니다.";
+        }
+      } catch (err) {
+        document.getElementById("scoreImg").alt = "에러 발생: " + err;
+      }
+    });
+
+    // ----- 4. TTS 생성 -----
+    document.getElementById("generateTtsBtn").addEventListener("click", async () => {
+      const text = document.getElementById("ttsInput").value.trim();
+      if (!text) {
+        alert("TTS로 변환할 텍스트를 입력하세요.");
+        return;
+      }
+
+      const btn = document.getElementById("generateTtsBtn");
+      btn.disabled = true;
+      btn.textContent = "TTS 생성 중… 잠시만 기다려주세요";
+      document.getElementById("ttsAudio").src = "";
+
+      try {
+        const res = await fetch("/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json();
+          alert("TTS 생성 오류: " + (errJson.error || res.statusText));
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audioEl = document.getElementById("ttsAudio");
+        audioEl.src = url;
+        audioEl.play();
+      } catch (err) {
+        alert("에러 발생: " + err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "TTS 생성";
+      }
+    });
+  </script>
+</body>
+</html>
+

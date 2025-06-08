@@ -1,0 +1,20 @@
+# 파이썬 관련
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.pytest_cache/
+
+# 가상환경 폴더 무시 (권장)
+venv/
+.venv/
+
+# VS Code 설정 파일 무시
+.vscode/
+
+# 환경 변수 파일 무시
+.env
+
+AI_SONG_GEN/
+SW-music/
+
