@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 음악 생성 사이트</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; max-width: 650px; }
+    h1 { text-align: center; }
+    label { font-weight: bold; }
+    section { margin-bottom: 32px; }
+    textarea, select, input[type=text] { width: 100%; margin: 8px 0; padding: 6px; }
+    button { padding: 8px 20px; margin-top: 8px; }
+    #score-img { max-width: 100%; margin-top: 10px; }
+    pre { background: #f7f7f7; padding: 8px; min-height: 32px; }
+  </style>
+</head>
+<body>
+  <h1>AI 음악 생성 사이트</h1>
+
+  <section>
+    <h2>1. 가사 생성</h2>
+    <form id="lyrics-form">
+      <label>주제: <input type="text" id="topic" placeholder="예: 바람, 사랑, 여행 등" /></label><br>
+      <label>느낌:
+        <select id="feeling">
+          <option value="">-- 선택 --</option>
+          <option>신나는</option>
+          <option>잔잔한</option>
+          <option>슬픈</option>
+          <option>밝은</option>
+        </select>
+      </label><br>
+      <label>장르:
+        <select id="genre">
+          <option value="">-- 선택 --</option>
+          <option>EDM</option>
+          <option>발라드</option>
+          <option>록</option>
+          <option>팝</option>
+        </select>
+      </label><br>
+      <button type="submit">가사 생성</button>
+    </form>
+    <pre id="lyrics-output"></pre>
+  </section>
+
+  <section>
+    <h2>2. 멜로디/보컬 생성</h2>
+    <form id="melody-form">
+      <label>가사:
+        <textarea id="melody-lyrics" placeholder="위에서 생성한 가사 또는 직접 입력"></textarea>
+      </label><br>
+      <label>느낌:
+        <select id="melody-feeling">
+          <option value="">-- 선택 --</option>
+          <option>신나는</option>
+          <option>잔잔한</option>
+          <option>슬픈</option>
+          <option>밝은</option>
+        </select>
+      </label><br>
+      <label>장르:
+        <select id="melody-genre">
+          <option value="">-- 선택 --</option>
+          <option>EDM</option>
+          <option>발라드</option>
+          <option>록</option>
+          <option>팝</option>
+        </select>
+      </label><br>
+      <button type="submit">멜로디+보컬 생성</button>
+    </form>
+    <div id="melody-output"></div>
+  </section>
+
+  <section>
+    <h2>3. 악보(PNG) 출력</h2>
+    <form id="score-form">
+      <label>악기:
+        <select id="instrument">
+          <option value="">-- 선택 --</option>
+          <option>피아노</option>
+          <option>기타</option>
+          <option>바이올린</option>
+          <option>플루트</option>
+        </select>
+      </label><br>
+      <button type="submit">악보 생성</button>
+    </form>
+    <img id="score-img" src="" alt="악보 이미지" style="display:none;">
+  </section>
+
+  <script>
+    // 1. 가사 생성
+    document.getElementById('lyrics-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const topic = document.getElementById('topic').value.trim();
+      const feeling = document.getElementById('feeling').value;
+      const genre = document.getElementById('genre').value;
+      const out = document.getElementById('lyrics-output');
+      out.textContent = "생성 중...";
+      try {
+        const res = await fetch('/generate-lyrics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, feeling, genre })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          out.textContent = data.lyrics;
+          // 가사 자동 복사
+          document.getElementById('melody-lyrics').value = data.lyrics;
+        } else {
+          out.textContent = '에러: ' + (data.error || res.statusText);
+        }
+      } catch(e) {
+        out.textContent = '에러: ' + e;
+      }
+    };
+
+    // 2. 멜로디+보컬 생성
+    document.getElementById('melody-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const lyrics = document.getElementById('melody-lyrics').value.trim();
+      const feeling = document.getElementById('melody-feeling').value;
+      const genre = document.getElementById('melody-genre').value;
+      const out = document.getElementById('melody-output');
+      out.textContent = "생성 중...";
+      try {
+        const res = await fetch('/generate-melody', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lyrics, feeling, genre })
+        });
+        if (res.ok) {
+          // mp3파일 다운로드
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          out.innerHTML = `<audio controls src="${url}"></audio>
+            <a href="${url}" download="melody.mp3">[MP3 다운로드]</a>`;
+        } else {
+          const data = await res.json();
+          out.textContent = '에러: ' + (data.error || res.statusText);
+        }
+      } catch(e) {
+        out.textContent = '에러: ' + e;
+      }
+    };
+
+    // 3. 악보(PNG) 생성
+    document.getElementById('score-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const instrument = document.getElementById('instrument').value;
+      const img = document.getElementById('score-img');
+      img.style.display = 'none';
+      img.src = '';
+      try {
+        const res = await fetch('/generate-score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instrument })
+        });
+        const data = await res.json();
+        if (res.ok && data.score_png) {
+          img.src = 'data:image/png;base64,' + data.score_png;
+          img.style.display = '';
+        } else {
+          img.alt = '에러: ' + (data.error || res.statusText);
+        }
+      } catch(e) {
+        img.alt = '에러: ' + e;
+      }
+    };
+  </script>
+</body>
+</html>
