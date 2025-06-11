@@ -1,141 +1,95 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>AI 노래 생성기</title>
-    <style>
-        body { font-family: sans-serif; margin: 40px; }
-        label { font-weight: bold; }
-        .section { margin-bottom: 24px; }
-        textarea { width: 100%; height: 60px; }
-        select, input[type="text"] { width: 150px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>AI 노래 생성기 (YUE Demo)</title>
+  <style>
+    body { font-family: sans-serif; margin: 40px; }
+    label { font-weight: bold; }
+    .section { margin-bottom: 24px; }
+    textarea { width: 100%; height: 80px; }
+    select, input { width: 160px; }
+  </style>
 </head>
 <body>
-    <h1>AI 노래 생성기 (YUE Demo)</h1>
+  <h1>AI 노래 생성기 (YUE Demo)</h1>
 
-    <!-- 1. 가사 입력 or 주제 입력 -->
-    <div class="section">
-        <label>가사(직접 입력 또는 아래에 주제 입력 후 '가사 생성' 클릭):</label><br>
-        <textarea id="lyrics" placeholder="직접 가사를 입력하거나, 아래 주제를 입력해 생성하세요"></textarea>
-        <br>
-        <input type="text" id="topic" placeholder="가사 주제 입력">
-        <button id="btn-generate-lyrics">가사 생성</button>
-    </div>
+  <!-- 1. 가사 생성 -->
+  <div class="section">
+    <label>가사 주제 입력:</label><br>
+    <input type="text" id="topic" placeholder="예: 사랑, 이별, 여름 바다"><button id="btn-generate-lyrics">가사 생성</button>
+    <br><br>
+    <label>생성된 가사:</label><br>
+    <textarea id="lyrics" placeholder="여기에 가사가 표시됩니다"></textarea>
+  </div>
 
-    <!-- 2. 옵션 선택 -->
-    <div class="section">
-        <label>음악 옵션:</label><br>
-        스타일: 
-        <select id="style">
-            <option value="">자동추천</option>
-            <option value="밝음">밝음</option>
-            <option value="잔잔함">잔잔함</option>
-            <option value="슬픔">슬픔</option>
-        </select>
-        장르: 
-        <select id="genre">
-            <option value="">자동추천</option>
-            <option value="pop">팝 (pop)</option>
-            <option value="metal">메탈 (metal)</option>
-            <option value="jazz">재즈 (jazz)</option>
-            <option value="Ballad">발라드 (Ballad)</option>
-            <option value="soul">소울 (soul)</option>
-            <option value="country">컨트리 (country)</option>
-            <option value="Childrens Song">동요 (Childrens Song)</option>
-            <option value="Indie">인디 (Indie)</option>
-        </select>
-        템포: 
-        <select id="tempo">
-            <option value="">자동추천</option>
-            <option value="빠름">빠름</option>
-            <option value="보통">보통</option>
-            <option value="느림">느림</option>
-        </select>
-        <br><br>
-        반주(악기): 
-        <select id="accompaniment">
-            <option value="">자동추천</option>
-            <option value="피아노">피아노</option>
-            <option value="기타">기타</option>
-            <option value="오케스트라">오케스트라</option>
-        </select>
-        <br><br>
-        <button id="btn-generate-song">노래 생성</button>
-    </div>
+  <!-- 2. 음악 생성 옵션 -->
+  <div class="section">
+    <label>장르:</label>
+    <select id="genre">
+      <option value="">자동추천</option>
+      <option value="pop">팝</option>
+      <option value="ballad">발라드</option>
+      <option value="jazz">재즈</option>
+    </select>
+    <button id="btn-generate-song">노래 생성 (MP3 + 악보)</button>
+  </div>
 
-    <!-- 3. 악보 생성 -->
-    <div class="section">
-        <label>생성된 노래로 악보 출력:</label><br>
-        <button id="btn-generate-score">악보 생성</button>
-    </div>
+  <!-- 3. 결과 -->
+  <div class="section" id="result">
+    <h3>결과</h3>
+    <div id="generated-lyrics"></div>
+    <div id="generated-song"></div>
+    <div id="generated-score"></div>
+  </div>
 
-    <!-- 결과 -->
-    <div class="section" id="result">
-        <h3>결과</h3>
-        <div id="generated-lyrics"></div>
-        <div id="generated-song"></div>
-        <div id="generated-score"></div>
-    </div>
-
-    <!-- JQuery CDN (간단 데모용) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-    let midiPath = "";
-    let audioPath = "";
-
-    // 가사 생성
-    $('#btn-generate-lyrics').click(function() {
-        const topic = $('#topic').val();
-        $.ajax({
-            url: '/generate-lyrics',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({topic}),
-            success: function(res) {
-                $('#lyrics').val(res.lyrics);
-                $('#generated-lyrics').html('<b>생성된 가사:</b><br>' + res.lyrics.replace(/\n/g,"<br>"));
-            }
-        });
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // 1) 가사 생성
+    $('#btn-generate-lyrics').click(() => {
+      const topic = $('#topic').val();
+      $('#generated-lyrics').text('생성 중…');
+      $.ajax({
+        url: '/generate-lyrics',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ topic }),
+        success: res => {
+          $('#lyrics').val(res.lyrics);
+          $('#generated-lyrics').html('<b>생성된 가사:</b><br>' + res.lyrics.replace(/\n/g,'<br>'));
+        }
+      });
     });
 
-    // 노래 생성
-    $('#btn-generate-song').click(function() {
-        const lyrics = $('#lyrics').val();
-        const style = $('#style').val();
-        const tempo = $('#tempo').val();
-        const genre = $('#genre').val();
-        const accompaniment = $('#accompaniment').val();
-        $.ajax({
-            url: '/generate-song',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({lyrics, style, tempo, genre, accompaniment}),
-            success: function(res) {
-                midiPath = res.midi_path;
-                audioPath = res.audio_path;
-                $('#generated-song').html(`
-                    <b>노래(멜로디/반주 MIDI):</b> <a href="${midiPath.replace('./results','/download')}" download>다운로드</a><br>
-                    <b>AI보컬 오디오:</b> <a href="${audioPath.replace('./results','/download')}" download>다운로드</a>
-                `);
-            }
-        });
-    });
+    // 2) 노래 생성
+    $('#btn-generate-song').click(() => {
+      const lyrics = $('#lyrics').val();
+      const genre  = $('#genre').val();
+      $('#generated-song, #generated-score').text('생성 중…');
 
-    // 악보 생성
-    $('#btn-generate-score').click(function() {
-        if (!midiPath) { alert('먼저 노래를 생성하세요!'); return; }
-        const accompaniment = $('#accompaniment').val();
-        $.ajax({
-            url: '/generate-score',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({midi_path: midiPath, accompaniment}),
-            success: function(res) {
-                $('#generated-score').html(`<b>악보(PDF):</b> <a href="${res.score_path.replace('./results','/download')}" download>다운로드</a>`);
-            }
-        });
+      $.ajax({
+        url: '/generate-song',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ lyrics, genre }),
+        success: res => {
+          // audio
+          $('#generated-song').html(
+            `<b>🎵 오디오 (MP3):</b> 
+             <a href="/download/${res.audio_path}" download>다운로드</a>`
+          );
+          // score
+          $('#generated-score').html(
+            `<b>📄 악보 (PDF):</b> 
+             <a href="/download/${res.score_path}" download>다운로드</a>`
+          );
+        },
+        error: err => {
+          alert('생성 실패: ' + err.responseJSON.error);
+        }
+      });
     });
-    </script>
+  </script>
 </body>
 </html>
+
